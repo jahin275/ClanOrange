@@ -176,19 +176,18 @@
 <div class="container">
 
   <div id="loginView" class="card" style="max-width:420px;margin:60px auto;">
-    <h2>🍊 Clan Orange Login</h2>
+    <h2>🍊 Clan Orange</h2>
     <p style="margin-bottom:12px;font-size:.9em;color:#555;">
-      Initial password = your Code (e.g. CL0110).
+      Enter your Code to continue.
     </p>
-    <label>User Code</label>
-    <input type="text" id="loginCode" placeholder="CL0110" autocomplete="username">
-    <label>Password</label>
-    <input type="password" id="loginPass" placeholder="••••••" autocomplete="current-password">
+    <label>Your Code</label>
+    <input type="text" id="loginCode" placeholder="CL0110" autocomplete="username"
+           style="text-transform:uppercase;letter-spacing:2px;text-align:center;font-weight:700;font-size:1.15em;">
     <label style="display:flex;align-items:center;gap:8px;font-weight:500;margin:6px 0 12px;">
-      <input type="checkbox" id="stayLoggedIn" style="width:auto;margin:0;">
+      <input type="checkbox" id="stayLoggedIn" style="width:auto;margin:0;" checked>
       Stay logged in
     </label>
-    <button class="btn btn-primary" style="width:100%;" id="loginBtn" onclick="handleLogin(this)">Login</button>
+    <button class="btn btn-primary" style="width:100%;" id="loginBtn" onclick="handleLogin(this)">Enter</button>
     <p id="loginError" style="color:#c00;margin-top:10px;font-weight:700;"></p>
   </div>
 
@@ -197,7 +196,6 @@
       <button class="btn btn-primary" onclick="openModal('workModal')">+ Submit Work</button>
       <button class="btn btn-secondary" onclick="markOff()">🌴 Off Day</button>
       <button class="btn btn-secondary" onclick="openModal('summaryModal')">📊 Summary</button>
-      <button class="btn btn-secondary" onclick="openModal('settingsModal')">⚙️ Settings</button>
     </div>
     <h2 style="margin-bottom:12px;color:#fff;text-shadow:2px 2px 0 #000;">📰 Work Feed</h2>
     <div id="feed"></div>
@@ -221,20 +219,6 @@
     <button class="btn btn-primary" style="width:100%;" onclick="submitWork(this)">🚀 Submit</button>
     <button class="btn btn-secondary" style="width:100%;margin-top:8px;"
             onclick="closeModal('workModal')">Cancel</button>
-  </div>
-</div>
-
-<div id="settingsModal" class="modal-overlay">
-  <div class="modal">
-    <h3>Change Password</h3>
-    <label>Current Password</label>
-    <input type="password" id="oldPass">
-    <label>New Password</label>
-    <input type="password" id="newPass">
-    <button class="btn btn-primary" style="width:100%;" onclick="changePass()">Update</button>
-    <button class="btn btn-secondary" style="width:100%;margin-top:8px;"
-            onclick="closeModal('settingsModal')">Cancel</button>
-    <p id="setMsg" style="margin-top:10px;font-weight:700;"></p>
   </div>
 </div>
 
@@ -312,18 +296,18 @@ function avatarFallback(code) {
 
 async function handleLogin(btn) {
   const code = document.getElementById('loginCode').value.trim();
-  const pass = document.getElementById('loginPass').value.trim();
   const stay = document.getElementById('stayLoggedIn').checked;
   const errEl = document.getElementById('loginError');
   errEl.textContent = '';
-  if (!code || !pass) { errEl.textContent = 'Fill both fields.'; return; }
+
+  if (!code) { errEl.textContent = 'Enter your Code.'; return; }
 
   const orig = btn.textContent;
-  btn.disabled = true; btn.textContent = 'Logging in...';
+  btn.disabled = true; btn.textContent = 'Entering...';
 
   try {
     const res = await withLoader(function () {
-      return api('login', { code: code, password: pass });
+      return api('login', { code: code });
     });
     if (res.success) {
       currentUser = res.user;
@@ -474,19 +458,6 @@ async function markOff() {
     await withLoader(function () { return api('markOffDay', { code: currentUser.Code }); });
     alert('Off Day recorded. 🌴');
   } catch (e) { alert('Failed.'); }
-}
-
-async function changePass() {
-  const o = document.getElementById('oldPass').value;
-  const n = document.getElementById('newPass').value;
-  const m = document.getElementById('setMsg');
-  if (!o || !n) { m.style.color = '#c00'; m.textContent = 'Fill both fields.'; return; }
-  try {
-    const r = await api('changePassword', { code: currentUser.Code, oldPass: o, newPass: n });
-    m.style.color = r.success ? 'green' : '#c00';
-    m.textContent = r.message;
-    if (r.success) setTimeout(function () { closeModal('settingsModal'); }, 1500);
-  } catch (e) { m.style.color = '#c00'; m.textContent = 'Server error.'; }
 }
 
 async function loadSummary() {
