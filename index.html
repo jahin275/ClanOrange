@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clan Orange</title>
+<link rel="icon" href="./favicon.png">
+<style>
+  :root {
+    --bg: #1bddff;
+    --ground: #2e7d32;
+    --card: rgba(255,255,255,0.94);
+    --text: #1a1a1a;
+    --orange: #ff8c00;
+    --dark: #0d2b3e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0;
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      -webkit-tap-highlight-color: transparent; }
+  html, body { background: var(--bg); color: var(--text); overflow-x: hidden; min-height: 100vh; }
+
+  /* ---------- PARALLAX BACKGROUND ---------- */
+  #sky {
+    position: fixed; inset: 0; z-index: -2;
+    background:
+      radial-gradient(circle at 20% 20%, #fff6 0 4px, transparent 5px),
+      radial-gradient(circle at 70% 40%, #fff6 0 6px, transparent 7px),
+      radial-gradient(circle at 40% 70%, #fff4 0 3px, transparent 4px),
+      radial-gradient(circle at 85% 15%, #fff5 0 5px, transparent 6px),
+      linear-gradient(180deg, #1bddff 0%, #45e3ff 60%, #a8f0ff 100%);
+    background-size: 200px 200px, 300px 300px, 150px 150px, 250px 250px, 100% 100%;
+    will-change: transform;
+  }
+  #clouds {
+    position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background-image:
+      radial-gradient(ellipse 80px 30px at 15% 15%, #fff, transparent 70%),
+      radial-gradient(ellipse 100px 35px at 60% 25%, #fff, transparent 70%),
+      radial-gradient(ellipse 70px 25px at 35% 45%, #fff, transparent 70%);
+    opacity: .55;
+    will-change: transform;
+  }
+  #ground {
+    position: fixed; bottom: 0; left: 0; width: 100%; height: 120px; z-index: -1;
+    background: var(--ground);
+    box-shadow: inset 0 6px 0 #1b5e20, inset 0 -10px 0 #1b3d12;
+    background-image: repeating-linear-gradient(90deg, #2e7d32 0 40px, #276b2b 40px 80px);
+  }
+
+  /* ---------- HEADER ---------- */
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 18px;
+    background: rgba(0,0,0,0.35);
+    backdrop-filter: blur(6px);
+    border-bottom: 4px solid #000;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .logo { height: 46px; image-rendering: pixelated; }
+  .user-info { display: flex; align-items: center; gap: 12px; color: #fff; font-weight: 700; }
+  .user-info img {
+    width: 40px; height: 40px; border-radius: 8px;
+    border: 2px solid #fff; image-rendering: pixelated; background: #fff;
+  }
+
+  .container { max-width: 780px; margin: 0 auto; padding: 18px; }
+
+  /* ---------- CARDS ---------- */
+  .card {
+    background: var(--card);
+    border: 4px solid #000;
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 16px;
+    box-shadow: 6px 6px 0 rgba(0,0,0,0.35);
+  }
+  .card h2, .card h3 { margin-bottom: 10px; }
+
+  /* ---------- INPUTS & BUTTONS ---------- */
+  input, textarea, select {
+    width: 100%; padding: 10px 12px; margin-bottom: 10px;
+    border: 3px solid #000; border-radius: 8px;
+    font-size: 1em; background: #fff;
+  }
+  label { font-weight: 600; display: block; margin-bottom: 4px; font-size: .9em; }
+
+  .btn {
+    padding: 10px 18px; border: 3px solid #000; border-radius: 8px;
+    cursor: pointer; font-weight: 800; font-size: .95em;
+    background: #fff; color: #000;
+    box-shadow: 3px 3px 0 #000;
+    transition: transform .06s;
+  }
+  .btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #000; }
+  .btn:disabled { opacity: .6; cursor: wait; }
+  .btn-primary { background: var(--ground); color: #fff; }
+  .btn-warn    { background: var(--orange); color: #fff; }
+  .btn-secondary { background: #b0bec5; }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+
+  /* ---------- FEED ---------- */
+  .post-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .post-header img { width: 48px; height: 48px; border-radius: 8px;
+                     border: 3px solid #000; image-rendering: pixelated; background: #fff; }
+  .post-meta { font-size: .78em; color: #555; }
+  .kpi-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .kpi-tag { background: #e0f7fa; border: 2px solid #000;
+             padding: 3px 10px; border-radius: 20px;
+             font-size: .82em; font-weight: 700; }
+  .orange-btn {
+    background: var(--orange); color: #fff; border: 3px solid #000;
+    padding: 6px 14px; border-radius: 20px; cursor: pointer;
+    font-weight: 800; display: inline-flex; align-items: center; gap: 6px;
+    box-shadow: 3px 3px 0 #000;
+  }
+  .orange-btn.liked { background: #cfd8dc; color: #333; }
+  .orange-btn:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 #000; }
+
+  /* ---------- MODALS ---------- */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.6);
+    display: none; justify-content: center; align-items: center;
+    z-index: 100; padding: 16px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: #fff; padding: 22px; border-radius: 12px;
+    width: 100%; max-width: 460px; border: 4px solid #000;
+    box-shadow: 8px 8px 0 rgba(0,0,0,.5);
+    max-height: 90vh; overflow-y: auto;
+  }
+
+  /* ---------- SNAKE OVERLAY ---------- */
+  #snakeOverlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.85);
+    display: none; flex-direction: column;
+    justify-content: center; align-items: center;
+    z-index: 200;
+  }
+  #snakeOverlay.show { display: flex; }
+  #snakeCanvas {
+    background: #111; border: 4px solid var(--orange);
+    max-width: 90vw; max-height: 65vh; touch-action: none;
+  }
+  .game-label { color: #fff; font-family: 'Courier New', monospace; margin-bottom: 10px; font-size: 1.1em; }
+  .game-score { color: var(--orange); font-family: 'Courier New', monospace;
+                font-size: 1.4em; font-weight: 900; margin-bottom: 8px; }
+  .game-hint { color: #aaa; font-size: .85em; margin-top: 10px; }
+
+  /* ---------- PROFILE / SUMMARY LISTS ---------- */
+  .history-item { border-bottom: 2px dashed #ccc; padding: 8px 0; font-size: .9em; }
+  .history-item:last-child { border-bottom: none; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 12px;
+          background: #e0f7fa; border: 2px solid #000; font-size: .78em;
+          margin-right: 4px; font-weight: 700; }
+  .pill.off { background: #ffcdd2; }
+  .pill.present { background: #c8e6c9; }
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width: 600px) {
+    header { padding: 8px 12px; }
+    .logo { height: 38px; }
+    .container { padding: 12px; }
+    .card { padding: 14px; }
+    .btn-row .btn { flex: 1 1 45%; }
+  }
+</style>
+</head>
+<body>
+
+<div id="sky"></div>
+<div id="clouds"></div>
+<div id="ground"></div>
+
+<header>
+  <img src="./LOGO.png" alt="Clan Orange" class="logo"
+       onerror="this.style.display='none'">
+  <div class="user-info" id="userInfo" style="display:none;">
+    <img id="headerPic" src="" alt="">
+    <span id="headerName"></span>
+    <button class="btn btn-warn" onclick="logout()">Logout</button>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- LOGIN -->
+  <div id="loginView" class="card" style="max-width:420px;margin:60px auto;">
+    <h2>🍊 Clan Orange Login</h2>
+    <p style="margin-bottom:12px;font-size:.9em;color:#555;">
+      Initial password = your Code (e.g. CL0110).
+    </p>
+    <label>User Code</label>
+    <input type="text" id="loginCode" placeholder="CL0110" autocomplete="username">
+    <label>Password</label>
+    <input type="password" id="loginPass" placeholder="••••••" autocomplete="current-password">
+    <label style="display:flex;align-items:center;gap:8px;font-weight:500;margin:6px 0 12px;">
+      <input type="checkbox" id="stayLoggedIn" style="width:auto;margin:0;">
+      Stay logged in
+    </label>
+    <button class="btn btn-primary" style="width:100%;" id="loginBtn" onclick="handleLogin(this)">Login</button>
+    <p id="loginError" style="color:#c00;margin-top:10px;font-weight:700;"></p>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="mainView" style="display:none;">
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="openModal('workModal')">+ Submit Work</button>
+      <button class="btn btn-secondary" onclick="markOff()">🌴 Off Day</button>
+      <button class="btn btn-secondary" onclick="openModal('summaryModal')">📊 Summary</button>
+      <button class="btn btn-secondary" onclick="openModal('settingsModal')">⚙️ Settings</button>
+    </div>
+    <h2 style="margin-bottom:12px;color:#fff;text-shadow:2px 2px 0 #000;">📰 Work Feed</h2>
+    <div id="feed"></div>
+  </div>
+
+</div>
+
+<!-- WORK MODAL -->
+<div id="workModal" class="modal-overlay">
+  <div class="modal">
+    <h3>Submit Work</h3>
+    <label>Description (optional)</label>
+    <textarea id="wDesc" rows="2" placeholder="What did you do?"></textarea>
+    <label>Working Minutes</label>
+    <input type="number" id="wMin" value="0" min="0">
+    <label>Promotional Posts</label>
+    <input type="number" id="wPromo" value="0" min="0">
+    <label>Successful Applications</label>
+    <input type="number" id="wApp" value="0" min="0">
+    <label>Successful Registrations</label>
+    <input type="number" id="wReg" value="0" min="0">
+    <button class="btn btn-primary" style="width:100%;" onclick="submitWork(this)">🚀 Submit</button>
+    <button class="btn btn-secondary" style="width:100%;margin-top:8px;"
+            onclick="closeModal('workModal')">Cancel</button>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div id="settingsModal" class="modal-overlay">
+  <div class="modal">
+    <h3>Change Password</h3>
+    <label>Current Password</label>
+    <input type="password" id="oldPass">
+    <label>New Password</label>
+    <input type="password" id="newPass">
+    <button class="btn btn-primary" style="width:100%;" onclick="changePass()">Update</button>
+    <button class="btn btn-secondary" style="width:100%;margin-top:8px;"
+            onclick="closeModal('settingsModal')">Cancel</button>
+    <p id="setMsg" style="margin-top:10px;font-weight:700;"></p>
+  </div>
+</div>
+
+<!-- SUMMARY MODAL -->
+<div id="summaryModal" class="modal-overlay">
+  <div class="modal">
+    <h3>Daily Summary</h3>
+    <label>Pick a date</label>
+    <input type="date" id="sumDate">
+    <button class="btn btn-primary" style="width:100%;" onclick="loadSummary()">Show</button>
+    <div id="sumResult" style="margin-top:12px;"></div>
+    <button class="btn btn-secondary" style="width:100%;margin-top:8px;"
+            onclick="closeModal('summaryModal')">Close</button>
+  </div>
+</div>
+
+<!-- PROFILE MODAL -->
+<div id="profileModal" class="modal-overlay">
+  <div class="modal">
+    <div id="profileContent"></div>
+    <button class="btn btn-secondary" style="width:100%;margin-top:12px;"
+            onclick="closeModal('profileModal')">Close</button>
+  </div>
+</div>
+
+<!-- SNAKE LOADING OVERLAY -->
+<div id="snakeOverlay">
+  <div class="game-label">🍊 Loading... Play Snake while we save!</div>
+  <div class="game-score">Score: <span id="snakeScore">0</span></div>
+  <canvas id="snakeCanvas" width="400" height="400"></canvas>
+  <div class="game-hint">Arrow keys (PC) • Swipe (Mobile) • Feeds on your clan!</div>
+</div>
+
+<script>
+/* =================================================================
+   CLAN ORANGE — Frontend
+   Backend: Google Apps Script Web App
+   ================================================================= */
+const API_URL = 'https://script.google.com/macros/s/AKfycbysr7LGnzaA1iHcm6vzlnPKftbPLnMEp9Qv8RQKWtintNhDWSIvo_9EOMdo6y9y_1Jg9g/exec';
+
+let currentUser = null;
+let feedData = [];
+
+/* ---------- API WRAPPER ---------- */
+async function api(action, payload) {
+  payload = payload || {};
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // avoids CORS preflight
+    body: JSON.stringify(Object.assign({ action: action }, payload)),
+    redirect: 'follow'
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
+/* ---------- PARALLAX ---------- */
+window.addEventListener('scroll', function () {
+  const y = window.pageYOffset;
+  document.getElementById('sky').style.transform    = 'translateY(' + (y * 0.35) + 'px)';
+  document.getElementById('clouds').style.transform = 'translateY(' + (y * 0.6) + 'px)';
+}, { passive: true });
+
+/* ---------- AVATAR FALLBACK ---------- */
+function avatarFallback(code) {
+  const initials = String(code).slice(-3);
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">' +
+              '<rect width="100" height="100" fill="#2e7d32"/>' +
+              '<text x="50" y="66" font-size="44" font-family="monospace" ' +
+              'fill="#fff" text-anchor="middle" font-weight="900">' + initials + '</text></svg>';
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+}
+
+/* ---------- LOGIN ---------- */
+async function handleLogin(btn) {
+  const code = document.getElementById('loginCode').value.trim();
+  const pass = document.getElementById('loginPass').value.trim();
+  const stay = document.getElementById('stayLoggedIn').checked;
+  const errEl = document.getElementById('loginError');
+  errEl.textContent = '';
+
+  if (!code || !pass) { errEl.textContent = 'Fill both fields.'; return; }
+
+  const orig = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Logging in...';
+
+  try {
+    const res = await api('login', { code: code, password: pass });
+    if (res.success) {
+      currentUser = res.user;
+      (stay ? localStorage : sessionStorage).setItem('clanOrangeUser', JSON.stringify(currentUser));
+      enterApp();
+    } else {
+      errEl.textContent = res.message || 'Login failed.';
+    }
+  } catch (e) {
+    errEl.textContent = 'Server error. Try again.';
+    console.error(e);
+  } finally {
+    btn.disabled = false; btn.textContent = orig;
+  }
+}
+
+function logout() {
+  localStorage.removeItem('clanOrangeUser');
+  sessionStorage.removeItem('clanOrangeUser');
+  location.reload();
+}
+
+window.addEventListener('load', function () {
+  const saved = localStorage.getItem('clanOrangeUser') || sessionStorage.getItem('clanOrangeUser');
+  if (saved) {
+    try { currentUser = JSON.parse(saved); enterApp(); }
+    catch (e) { localStorage.removeItem('clanOrangeUser'); }
+  }
+});
+
+function enterApp() {
+  document.getElementById('loginView').style.display = 'none';
+  document.getElementById('mainView').style.display = 'block';
+  document.getElementById('userInfo').style.display = 'flex';
+  document.getElementById('headerName').textContent = currentUser.Name || currentUser.Code;
+
+  const pic = document.getElementById('headerPic');
+  pic.src = './' + currentUser.Code + '.png';
+  pic.onerror = function () { this.src = avatarFallback(currentUser.Code); };
+
+  loadFeed();
+}
+
+/* ---------- FEED ---------- */
+async function loadFeed() {
+  try {
+    feedData = await api('getFeed');
+    renderFeed();
+  } catch (e) { console.error('Feed error', e); }
+}
+
+function renderFeed() {
+  const box = document.getElementById('feed');
+  if (!feedData.length) {
+    box.innerHTML = '<div class="card"><p>No work entries yet. Be the first! 🍊</p></div>';
+    return;
+  }
+  box.innerHTML = feedData.map(function (e) {
+    const liked = e.orangeGivers.indexOf(currentUser.Code) !== -1;
+    const dt = new Date(e.timestamp).toLocaleString();
+    return '' +
+      '<div class="card">' +
+        '<div class="post-header">' +
+          '<img src="./' + e.userCode + '.png" alt="' + escapeHtml(e.userName) + '" ' +
+               'onerror="this.src=avatarFallback(\'' + e.userCode + '\')">' +
+          '<div>' +
+            '<strong>' + escapeHtml(e.userName) + '</strong>' +
+            '<div class="post-meta">' + dt + '</div>' +
+          '</div>' +
+        '</div>' +
+        (e.description ? '<p style="margin:6px 0;">' + escapeHtml(e.description) + '</p>' : '') +
+        '<div class="kpi-tags">' +
+          '<span class="kpi-tag">⏱ ' + e.minutes + 'm</span>' +
+          '<span class="kpi-tag">📢 ' + e.promos + '</span>' +
+          '<span class="kpi-tag">📝 ' + e.apps + '</span>' +
+          '<span class="kpi-tag">✅ ' + e.regs + '</span>' +
+        '</div>' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;">' +
+          '<button class="orange-btn ' + (liked ? 'liked' : '') + '" ' +
+                  'onclick="toggleOrange(\'' + e.entryId + '\')">🍊 ' + e.oranges + '</button>' +
+          '<a href="#" style="font-weight:700;color:#0d2b3e;" ' +
+             'onclick="viewProfile(\'' + e.userCode + '\');return false;">View Profile →</a>' +
+        '</div>' +
+      '</div>';
+  }).join('');
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/* ---------- ORANGE ---------- */
+async function toggleOrange(entryId) {
+  try {
+    await api('toggleOrange', { entryId: entryId, giverCode: currentUser.Code });
+    loadFeed();
+  } catch (e) { alert('Failed to toggle orange.'); }
+}
+
+/* ---------- SUBMIT WORK ---------- */
+async function submitWork(btn) {
+  const desc  = document.getElementById('wDesc').value;
+  const mins  = document.getElementById('wMin').value;
+  const promo = document.getElementById('wPromo').value;
+  const app   = document.getElementById('wApp').value;
+  const reg   = document.getElementById('wReg').value;
+
+  closeModal('workModal');
+  showSnake();
+
+  try {
+    await api('submitWork', {
+      code: currentUser.Code,
+      description: desc,
+      minutes: mins,
+      promos: promo,
+      apps: app,
+      regs: reg
+    });
+    setTimeout(function () {
+      hideSnake();
+      document.getElementById('wDesc').value = '';
+      ['wMin', 'wPromo', 'wApp', 'wReg'].forEach(function (id) {
+        document.getElementById(id).value = 0;
+      });
+      loadFeed();
+    }, 600);
+  } catch (e) {
+    setTimeout(function () { hideSnake(); alert('Submit failed. Try again.'); }, 600);
+    console.error(e);
+  }
+}
+
+/* ---------- OFF DAY ---------- */
+async function markOff() {
+  if (!confirm('Mark today as an Off Day?')) return;
+  try {
+    await api('markOffDay', { code: currentUser.Code });
+    alert('Off Day recorded. 🌴');
+  } catch (e) { alert('Failed.'); }
+}
+
+/* ---------- CHANGE PASSWORD ---------- */
+async function changePass() {
+  const o = document.getElementById('oldPass').value;
+  const n = document.getElementById('newPass').value;
+  const m = document.getElementById('setMsg');
+  if (!o || !n) { m.style.color = '#c00'; m.textContent = 'Fill both fields.'; return; }
+  try {
+    const r = await api('changePassword', { code: currentUser.Code, oldPass: o, newPass: n });
+    m.style.color = r.success ? 'green' : '#c00';
+    m.textContent = r.message;
+    if (r.success) setTimeout(function () { closeModal('settingsModal'); }, 1500);
+  } catch (e) { m.style.color = '#c00'; m.textContent = 'Server error.'; }
+}
+
+/* ---------- SUMMARY ---------- */
+async function loadSummary() {
+  const d = document.getElementById('sumDate').value;
+  if (!d) return;
+  const box = document.getElementById('sumResult');
+  box.innerHTML = 'Loading...';
+  try {
+    const rows = await api('getDailySummary', { date: d });
+    if (!rows.length) { box.innerHTML = '<p>No work recorded.</p>'; return; }
+    box.innerHTML = rows.map(function (s) {
+      return '' +
+        '<div class="history-item">' +
+          '<strong>' + escapeHtml(s.userName) + '</strong> ' +
+          '<span style="color:#666;">(' + s.userCode + ')</span><br>' +
+          '<span class="pill">⏱ ' + s.minutes + 'm</span>' +
+          '<span class="pill">📢 ' + s.promos + '</span>' +
+          '<span class="pill">📝 ' + s.apps + '</span>' +
+          '<span class="pill">✅ ' + s.regs + '</span>' +
+          '<span class="pill" style="background:#ffe0b2;">⭐ ' + s.totalPoints.toFixed(1) + ' pts</span>' +
+        '</div>';
+    }).join('');
+  } catch (e) { box.innerHTML = 'Error loading summary.'; }
+}
+
+/* ---------- PROFILE ---------- */
+async function viewProfile(code) {
+  openModal('profileModal');
+  const box = document.getElementById('profileContent');
+  box.innerHTML = 'Loading...';
+  try {
+    const r = await api('getUserProfile', { code: code });
+    if (!r.success) { box.innerHTML = '<p>User not found.</p>'; return; }
+
+    const work = r.workHistory.slice(0, 20).map(function (w) {
+      return '' +
+        '<div class="history-item">' +
+          '<div style="font-size:.78em;color:#666;">' + new Date(w.Timestamp).toLocaleString() + '</div>' +
+          (w.Description ? '<div>' + escapeHtml(w.Description) + '</div>' : '') +
+          '<span class="pill">⏱ ' + w.WorkingMinutes + 'm</span>' +
+          '<span class="pill">📢 ' + w.PromotionalPost + '</span>' +
+          '<span class="pill">📝 ' + w.SuccessfulApplication + '</span>' +
+          '<span class="pill">✅ ' + w.SuccessfulRegistration + '</span>' +
+        '</div>';
+    }).join('') || '<p style="font-size:.9em;">No work yet.</p>';
+
+    const att = r.attendance.slice(0, 15).map(function (a) {
+      const cls = (a.status === 'Off Day') ? 'off' : 'present';
+      return '' +
+        '<div class="history-item">' +
+          '<span style="font-size:.85em;">' + a.date + '</span>' +
+          '<span class="pill ' + cls + '">' + a.status + '</span>' +
+        '</div>';
+    }).join('') || '<p style="font-size:.9em;">No attendance yet.</p>';
+
+    box.innerHTML = '' +
+      '<div style="display:flex;gap:12px;align-items:center;margin-bottom:12px;">' +
+        '<img src="./' + r.profile.Code + '.png" ' +
+             'onerror="this.src=avatarFallback(\'' + r.profile.Code + '\')" ' +
+             'style="width:60px;height:60px;border:3px solid #000;border-radius:8px;">' +
+        '<div>' +
+          '<h3>' + escapeHtml(r.profile.Name) + '</h3>' +
+          '<div style="font-size:.85em;color:#666;">' + escapeHtml(r.profile.Code) + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<h4>Work History</h4>' +
+      '<div style="max-height:220px;overflow-y:auto;border:2px solid #000;border-radius:8px;padding:8px;margin-bottom:10px;">' +
+        work +
+      '</div>' +
+      '<h4>Attendance</h4>' +
+      '<div style="max-height:160px;overflow-y:auto;border:2px solid #000;border-radius:8px;padding:8px;">' +
+        att +
+      '</div>';
+  } catch (e) { box.innerHTML = '<p>Error loading profile.</p>'; }
+}
+
+/* ---------- MODALS ---------- */
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+/* =================================================================
+   SNAKE GAME (loading screen)
+   ================================================================= */
+let snakeTick = null;
+let snakeKeyHandler = null;
+
+function showSnake() {
+  document.getElementById('snakeOverlay').classList.add('show');
+  startSnake();
+}
+
+function hideSnake() {
+  document.getElementById('snakeOverlay').classList.remove('show');
+  if (snakeTick) { clearInterval(snakeTick); snakeTick = null; }
+  if (snakeKeyHandler) { document.removeEventListener('keydown', snakeKeyHandler); snakeKeyHandler = null; }
+}
+
+function startSnake() {
+  const canvas = document.getElementById('snakeCanvas');
+  const ctx = canvas.getContext('2d');
+  const GRID = 20;
+  const SIZE = canvas.width / GRID;
+
+  const playerCodes = ['CL0158','CL0124','CL0163','CL0173','CL0147',
+                       'CL0140','CL0104','CL0145','CL0110'];
+  const imgs = playerCodes.map(function (c) {
+    const i = new Image();
+    i.src = './' + c + '.png';
+    return i;
+  });
+
+  const state = {
+    snake: [{x:10,y:10},{x:9,y:10},{x:8,y:10}],
+    dir: {x:1, y:0},
+    food: {x:15, y:10, idx:0},
+    score: 0,
+    over: false
+  };
+
+  function placeFood() {
+    state.food.x = Math.floor(Math.random() * GRID);
+    state.food.y = Math.floor(Math.random() * GRID);
+    state.food.idx = (state.food.idx + 1) % imgs.length;
+    if (state.snake.some(function (s) { return s.x === state.food.x && s.y === state.food.y; })) placeFood();
+  }
+
+  function draw() {
+    ctx.fillStyle = '#0a0a0a';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.strokeStyle = '#1f1f1f';
+    for (let i = 0; i <= GRID; i++) {
+      ctx.beginPath(); ctx.moveTo(i*SIZE, 0); ctx.lineTo(i*SIZE, canvas.height); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, i*SIZE); ctx.lineTo(canvas.width, i*SIZE); ctx.stroke();
+    }
+
+    state.snake.forEach(function (s, i) {
+      ctx.fillStyle = (i === 0) ? '#ff8c00' : '#2e7d32';
+      ctx.fillRect(s.x*SIZE+1, s.y*SIZE+1, SIZE-2, SIZE-2);
+      ctx.strokeStyle = '#000';
+      ctx.strokeRect(s.x*SIZE+1, s.y*SIZE+1, SIZE-2, SIZE-2);
+    });
+
+    const img = imgs[state.food.idx];
+    if (img.complete && img.naturalWidth) {
+      ctx.drawImage(img, state.food.x*SIZE, state.food.y*SIZE, SIZE, SIZE);
+    } else {
+      ctx.fillStyle = '#ff8c00';
+      ctx.fillRect(state.food.x*SIZE, state.food.y*SIZE, SIZE, SIZE);
+    }
+    ctx.strokeStyle = '#ff8c00';
+    ctx.strokeRect(state.food.x*SIZE, state.food.y*SIZE, SIZE, SIZE);
+
+    document.getElementById('snakeScore').textContent = state.score;
+  }
+
+  function step() {
+    if (state.over) return;
+    const head = { x: state.snake[0].x + state.dir.x, y: state.snake[0].y + state.dir.y };
+
+    if (head.x < 0 || head.y < 0 || head.x >= GRID || head.y >= GRID ||
+        state.snake.some(function (s) { return s.x === head.x && s.y === head.y; })) {
+      state.over = true;
+      setTimeout(function () {
+        state.snake = [{x:10,y:10},{x:9,y:10},{x:8,y:10}];
+        state.dir = {x:1, y:0};
+        state.score = 0;
+        state.over = false;
+        placeFood();
+      }, 900);
+      return;
+    }
+
+    state.snake.unshift(head);
+    if (head.x === state.food.x && head.y === state.food.y) {
+      state.score++;
+      placeFood();
+    } else {
+      state.snake.pop();
+    }
+    draw();
+  }
+
+  snakeKeyHandler = function (e) {
+    const k = e.key;
+    if (k === 'ArrowUp'    && state.dir.y === 0) state.dir = {x:0, y:-1};
+    if (k === 'ArrowDown'  && state.dir.y === 0) state.dir = {x:0, y:1};
+    if (k === 'ArrowLeft'  && state.dir.x === 0) state.dir = {x:-1, y:0};
+    if (k === 'ArrowRight' && state.dir.x === 0) state.dir = {x:1, y:0};
+    if (k.indexOf('Arrow') === 0) e.preventDefault();
+  };
+  document.addEventListener('keydown', snakeKeyHandler);
+
+  let tsX = 0, tsY = 0;
+  canvas.addEventListener('touchstart', function (e) {
+    tsX = e.touches[0].clientX;
+    tsY = e.touches[0].clientY;
+  }, { passive: true });
+  canvas.addEventListener('touchend', function (e) {
+    const dx = e.changedTouches[0].clientX - tsX;
+    const dy = e.changedTouches[0].clientY - tsY;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      if (dx > 0 && state.dir.x === 0) state.dir = {x:1, y:0};
+      else if (dx < 0 && state.dir.x === 0) state.dir = {x:-1, y:0};
+    } else {
+      if (dy > 0 && state.dir.y === 0) state.dir = {x:0, y:1};
+      else if (dy < 0 && state.dir.y === 0) state.dir = {x:0, y:-1};
+    }
+  }, { passive: true });
+
+  snakeTick = setInterval(step, 140);
+  placeFood();
+  draw();
+}
+</script>
+</body>
+</html>
