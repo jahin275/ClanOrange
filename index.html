@@ -19,7 +19,6 @@
       -webkit-tap-highlight-color: transparent; }
   html, body { background: var(--bg); color: var(--text); overflow-x: hidden; min-height: 100vh; }
 
-  /* ---------- PARALLAX BACKGROUND ---------- */
   #sky {
     position: fixed; inset: 0; z-index: -2;
     background:
@@ -47,7 +46,6 @@
     background-image: repeating-linear-gradient(90deg, #2e7d32 0 40px, #276b2b 40px 80px);
   }
 
-  /* ---------- HEADER ---------- */
   header {
     display: flex; align-items: center; justify-content: space-between;
     padding: 10px 18px;
@@ -65,7 +63,6 @@
 
   .container { max-width: 780px; margin: 0 auto; padding: 18px; }
 
-  /* ---------- CARDS ---------- */
   .card {
     background: var(--card);
     border: 4px solid #000;
@@ -76,7 +73,6 @@
   }
   .card h2, .card h3 { margin-bottom: 10px; }
 
-  /* ---------- INPUTS & BUTTONS ---------- */
   input, textarea, select {
     width: 100%; padding: 10px 12px; margin-bottom: 10px;
     border: 3px solid #000; border-radius: 8px;
@@ -98,7 +94,6 @@
   .btn-secondary { background: #b0bec5; }
   .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
 
-  /* ---------- FEED ---------- */
   .post-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
   .post-header img { width: 48px; height: 48px; border-radius: 8px;
                      border: 3px solid #000; image-rendering: pixelated; background: #fff; }
@@ -116,7 +111,6 @@
   .orange-btn.liked { background: #cfd8dc; color: #333; }
   .orange-btn:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 #000; }
 
-  /* ---------- MODALS ---------- */
   .modal-overlay {
     position: fixed; inset: 0; background: rgba(0,0,0,.6);
     display: none; justify-content: center; align-items: center;
@@ -130,7 +124,6 @@
     max-height: 90vh; overflow-y: auto;
   }
 
-  /* ---------- SNAKE OVERLAY ---------- */
   #snakeOverlay {
     position: fixed; inset: 0; background: rgba(0,0,0,.85);
     display: none; flex-direction: column;
@@ -147,7 +140,6 @@
                 font-size: 1.4em; font-weight: 900; margin-bottom: 8px; }
   .game-hint { color: #aaa; font-size: .85em; margin-top: 10px; }
 
-  /* ---------- PROFILE / SUMMARY LISTS ---------- */
   .history-item { border-bottom: 2px dashed #ccc; padding: 8px 0; font-size: .9em; }
   .history-item:last-child { border-bottom: none; }
   .pill { display: inline-block; padding: 2px 8px; border-radius: 12px;
@@ -156,7 +148,6 @@
   .pill.off { background: #ffcdd2; }
   .pill.present { background: #c8e6c9; }
 
-  /* ---------- RESPONSIVE ---------- */
   @media (max-width: 600px) {
     header { padding: 8px 12px; }
     .logo { height: 38px; }
@@ -184,7 +175,6 @@
 
 <div class="container">
 
-  <!-- LOGIN -->
   <div id="loginView" class="card" style="max-width:420px;margin:60px auto;">
     <h2>🍊 Clan Orange Login</h2>
     <p style="margin-bottom:12px;font-size:.9em;color:#555;">
@@ -202,7 +192,6 @@
     <p id="loginError" style="color:#c00;margin-top:10px;font-weight:700;"></p>
   </div>
 
-  <!-- MAIN APP -->
   <div id="mainView" style="display:none;">
     <div class="btn-row">
       <button class="btn btn-primary" onclick="openModal('workModal')">+ Submit Work</button>
@@ -216,7 +205,6 @@
 
 </div>
 
-<!-- WORK MODAL -->
 <div id="workModal" class="modal-overlay">
   <div class="modal">
     <h3>Submit Work</h3>
@@ -236,7 +224,6 @@
   </div>
 </div>
 
-<!-- SETTINGS MODAL -->
 <div id="settingsModal" class="modal-overlay">
   <div class="modal">
     <h3>Change Password</h3>
@@ -251,7 +238,6 @@
   </div>
 </div>
 
-<!-- SUMMARY MODAL -->
 <div id="summaryModal" class="modal-overlay">
   <div class="modal">
     <h3>Daily Summary</h3>
@@ -264,7 +250,6 @@
   </div>
 </div>
 
-<!-- PROFILE MODAL -->
 <div id="profileModal" class="modal-overlay">
   <div class="modal">
     <div id="profileContent"></div>
@@ -273,7 +258,6 @@
   </div>
 </div>
 
-<!-- SNAKE LOADING OVERLAY -->
 <div id="snakeOverlay">
   <div class="game-label">🍊 Loading... Play Snake while we save!</div>
   <div class="game-score">Score: <span id="snakeScore">0</span></div>
@@ -282,21 +266,17 @@
 </div>
 
 <script>
-/* =================================================================
-   CLAN ORANGE — Frontend
-   Backend: Google Apps Script Web App
-   ================================================================= */
 const API_URL = 'https://script.google.com/macros/s/AKfycbysr7LGnzaA1iHcm6vzlnPKftbPLnMEp9Qv8RQKWtintNhDWSIvo_9EOMdo6y9y_1Jg9g/exec';
+const FAST_MS = 500;
 
 let currentUser = null;
 let feedData = [];
 
-/* ---------- API WRAPPER ---------- */
 async function api(action, payload) {
   payload = payload || {};
   const res = await fetch(API_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // avoids CORS preflight
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify(Object.assign({ action: action }, payload)),
     redirect: 'follow'
   });
@@ -304,14 +284,23 @@ async function api(action, payload) {
   return res.json();
 }
 
-/* ---------- PARALLAX ---------- */
+async function withLoader(promiseFactory) {
+  let shown = false;
+  const timer = setTimeout(function () { shown = true; showSnake(); }, FAST_MS);
+  try {
+    return await promiseFactory();
+  } finally {
+    clearTimeout(timer);
+    if (shown) hideSnake();
+  }
+}
+
 window.addEventListener('scroll', function () {
   const y = window.pageYOffset;
   document.getElementById('sky').style.transform    = 'translateY(' + (y * 0.35) + 'px)';
   document.getElementById('clouds').style.transform = 'translateY(' + (y * 0.6) + 'px)';
 }, { passive: true });
 
-/* ---------- AVATAR FALLBACK ---------- */
 function avatarFallback(code) {
   const initials = String(code).slice(-3);
   const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">' +
@@ -321,24 +310,25 @@ function avatarFallback(code) {
   return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
 }
 
-/* ---------- LOGIN ---------- */
 async function handleLogin(btn) {
   const code = document.getElementById('loginCode').value.trim();
   const pass = document.getElementById('loginPass').value.trim();
   const stay = document.getElementById('stayLoggedIn').checked;
   const errEl = document.getElementById('loginError');
   errEl.textContent = '';
-
   if (!code || !pass) { errEl.textContent = 'Fill both fields.'; return; }
 
   const orig = btn.textContent;
   btn.disabled = true; btn.textContent = 'Logging in...';
 
   try {
-    const res = await api('login', { code: code, password: pass });
+    const res = await withLoader(function () {
+      return api('login', { code: code, password: pass });
+    });
     if (res.success) {
       currentUser = res.user;
       (stay ? localStorage : sessionStorage).setItem('clanOrangeUser', JSON.stringify(currentUser));
+      localStorage.removeItem('clanOrangeFeed');
       enterApp();
     } else {
       errEl.textContent = res.message || 'Login failed.';
@@ -353,6 +343,7 @@ async function handleLogin(btn) {
 
 function logout() {
   localStorage.removeItem('clanOrangeUser');
+  localStorage.removeItem('clanOrangeFeed');
   sessionStorage.removeItem('clanOrangeUser');
   location.reload();
 }
@@ -375,13 +366,17 @@ function enterApp() {
   pic.src = './' + currentUser.Code + '.png';
   pic.onerror = function () { this.src = avatarFallback(currentUser.Code); };
 
+  const cached = localStorage.getItem('clanOrangeFeed');
+  if (cached) {
+    try { feedData = JSON.parse(cached); renderFeed(); } catch (e) {}
+  }
   loadFeed();
 }
 
-/* ---------- FEED ---------- */
 async function loadFeed() {
   try {
-    feedData = await api('getFeed');
+    feedData = await withLoader(function () { return api('getFeed'); });
+    localStorage.setItem('clanOrangeFeed', JSON.stringify(feedData));
     renderFeed();
   } catch (e) { console.error('Feed error', e); }
 }
@@ -427,15 +422,23 @@ function escapeHtml(s) {
                         .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-/* ---------- ORANGE ---------- */
 async function toggleOrange(entryId) {
+  const entry = feedData.find(function (e) { return e.entryId === entryId; });
+  if (entry) {
+    const idx = entry.orangeGivers.indexOf(currentUser.Code);
+    if (idx === -1) { entry.orangeGivers.push(currentUser.Code); entry.oranges++; }
+    else            { entry.orangeGivers.splice(idx, 1); entry.oranges--; }
+    renderFeed();
+  }
   try {
     await api('toggleOrange', { entryId: entryId, giverCode: currentUser.Code });
-    loadFeed();
-  } catch (e) { alert('Failed to toggle orange.'); }
+    const fresh = await api('getFeed');
+    feedData = fresh;
+    localStorage.setItem('clanOrangeFeed', JSON.stringify(feedData));
+    renderFeed();
+  } catch (e) { console.error(e); loadFeed(); }
 }
 
-/* ---------- SUBMIT WORK ---------- */
 async function submitWork(btn) {
   const desc  = document.getElementById('wDesc').value;
   const mins  = document.getElementById('wMin').value;
@@ -448,37 +451,31 @@ async function submitWork(btn) {
 
   try {
     await api('submitWork', {
-      code: currentUser.Code,
-      description: desc,
-      minutes: mins,
-      promos: promo,
-      apps: app,
-      regs: reg
+      code: currentUser.Code, description: desc,
+      minutes: mins, promos: promo, apps: app, regs: reg
     });
-    setTimeout(function () {
+    setTimeout(async function () {
       hideSnake();
       document.getElementById('wDesc').value = '';
       ['wMin', 'wPromo', 'wApp', 'wReg'].forEach(function (id) {
         document.getElementById(id).value = 0;
       });
-      loadFeed();
-    }, 600);
+      await loadFeed();
+    }, 1500);
   } catch (e) {
-    setTimeout(function () { hideSnake(); alert('Submit failed. Try again.'); }, 600);
+    setTimeout(function () { hideSnake(); alert('Submit failed. Try again.'); }, 800);
     console.error(e);
   }
 }
 
-/* ---------- OFF DAY ---------- */
 async function markOff() {
   if (!confirm('Mark today as an Off Day?')) return;
   try {
-    await api('markOffDay', { code: currentUser.Code });
+    await withLoader(function () { return api('markOffDay', { code: currentUser.Code }); });
     alert('Off Day recorded. 🌴');
   } catch (e) { alert('Failed.'); }
 }
 
-/* ---------- CHANGE PASSWORD ---------- */
 async function changePass() {
   const o = document.getElementById('oldPass').value;
   const n = document.getElementById('newPass').value;
@@ -492,14 +489,15 @@ async function changePass() {
   } catch (e) { m.style.color = '#c00'; m.textContent = 'Server error.'; }
 }
 
-/* ---------- SUMMARY ---------- */
 async function loadSummary() {
   const d = document.getElementById('sumDate').value;
   if (!d) return;
   const box = document.getElementById('sumResult');
   box.innerHTML = 'Loading...';
   try {
-    const rows = await api('getDailySummary', { date: d });
+    const rows = await withLoader(function () {
+      return api('getDailySummary', { date: d });
+    });
     if (!rows.length) { box.innerHTML = '<p>No work recorded.</p>'; return; }
     box.innerHTML = rows.map(function (s) {
       return '' +
@@ -516,13 +514,14 @@ async function loadSummary() {
   } catch (e) { box.innerHTML = 'Error loading summary.'; }
 }
 
-/* ---------- PROFILE ---------- */
 async function viewProfile(code) {
   openModal('profileModal');
   const box = document.getElementById('profileContent');
   box.innerHTML = 'Loading...';
   try {
-    const r = await api('getUserProfile', { code: code });
+    const r = await withLoader(function () {
+      return api('getUserProfile', { code: code });
+    });
     if (!r.success) { box.innerHTML = '<p>User not found.</p>'; return; }
 
     const work = r.workHistory.slice(0, 20).map(function (w) {
@@ -567,13 +566,9 @@ async function viewProfile(code) {
   } catch (e) { box.innerHTML = '<p>Error loading profile.</p>'; }
 }
 
-/* ---------- MODALS ---------- */
 function openModal(id) { document.getElementById(id).classList.add('show'); }
 function closeModal(id) { document.getElementById(id).classList.remove('show'); }
 
-/* =================================================================
-   SNAKE GAME (loading screen)
-   ================================================================= */
 let snakeTick = null;
 let snakeKeyHandler = null;
 
@@ -597,17 +592,14 @@ function startSnake() {
   const playerCodes = ['CL0158','CL0124','CL0163','CL0173','CL0147',
                        'CL0140','CL0104','CL0145','CL0110'];
   const imgs = playerCodes.map(function (c) {
-    const i = new Image();
-    i.src = './' + c + '.png';
-    return i;
+    const i = new Image(); i.src = './' + c + '.png'; return i;
   });
 
   const state = {
     snake: [{x:10,y:10},{x:9,y:10},{x:8,y:10}],
     dir: {x:1, y:0},
     food: {x:15, y:10, idx:0},
-    score: 0,
-    over: false
+    score: 0, over: false
   };
 
   function placeFood() {
@@ -620,20 +612,17 @@ function startSnake() {
   function draw() {
     ctx.fillStyle = '#0a0a0a';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-
     ctx.strokeStyle = '#1f1f1f';
     for (let i = 0; i <= GRID; i++) {
       ctx.beginPath(); ctx.moveTo(i*SIZE, 0); ctx.lineTo(i*SIZE, canvas.height); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(0, i*SIZE); ctx.lineTo(canvas.width, i*SIZE); ctx.stroke();
     }
-
     state.snake.forEach(function (s, i) {
       ctx.fillStyle = (i === 0) ? '#ff8c00' : '#2e7d32';
       ctx.fillRect(s.x*SIZE+1, s.y*SIZE+1, SIZE-2, SIZE-2);
       ctx.strokeStyle = '#000';
       ctx.strokeRect(s.x*SIZE+1, s.y*SIZE+1, SIZE-2, SIZE-2);
     });
-
     const img = imgs[state.food.idx];
     if (img.complete && img.naturalWidth) {
       ctx.drawImage(img, state.food.x*SIZE, state.food.y*SIZE, SIZE, SIZE);
@@ -643,34 +632,26 @@ function startSnake() {
     }
     ctx.strokeStyle = '#ff8c00';
     ctx.strokeRect(state.food.x*SIZE, state.food.y*SIZE, SIZE, SIZE);
-
     document.getElementById('snakeScore').textContent = state.score;
   }
 
   function step() {
     if (state.over) return;
     const head = { x: state.snake[0].x + state.dir.x, y: state.snake[0].y + state.dir.y };
-
     if (head.x < 0 || head.y < 0 || head.x >= GRID || head.y >= GRID ||
         state.snake.some(function (s) { return s.x === head.x && s.y === head.y; })) {
       state.over = true;
       setTimeout(function () {
         state.snake = [{x:10,y:10},{x:9,y:10},{x:8,y:10}];
         state.dir = {x:1, y:0};
-        state.score = 0;
-        state.over = false;
+        state.score = 0; state.over = false;
         placeFood();
-      }, 900);
+      }, 800);
       return;
     }
-
     state.snake.unshift(head);
-    if (head.x === state.food.x && head.y === state.food.y) {
-      state.score++;
-      placeFood();
-    } else {
-      state.snake.pop();
-    }
+    if (head.x === state.food.x && head.y === state.food.y) { state.score++; placeFood(); }
+    else { state.snake.pop(); }
     draw();
   }
 
@@ -686,8 +667,7 @@ function startSnake() {
 
   let tsX = 0, tsY = 0;
   canvas.addEventListener('touchstart', function (e) {
-    tsX = e.touches[0].clientX;
-    tsY = e.touches[0].clientY;
+    tsX = e.touches[0].clientX; tsY = e.touches[0].clientY;
   }, { passive: true });
   canvas.addEventListener('touchend', function (e) {
     const dx = e.changedTouches[0].clientX - tsX;
