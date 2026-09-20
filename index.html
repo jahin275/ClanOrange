@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Clan Orange</title>
 <link rel="icon" href="./favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #1bddff;
@@ -19,6 +22,7 @@
       -webkit-tap-highlight-color: transparent; }
   html, body { background: var(--bg); color: var(--text); overflow-x: hidden; min-height: 100vh; }
 
+  /* ---------- PARALLAX BACKGROUND ---------- */
   #sky {
     position: fixed; inset: 0; z-index: -2;
     background:
@@ -46,6 +50,7 @@
     background-image: repeating-linear-gradient(90deg, #2e7d32 0 40px, #276b2b 40px 80px);
   }
 
+  /* ---------- HEADER ---------- */
   header {
     display: flex; align-items: center; justify-content: space-between;
     padding: 10px 18px;
@@ -61,8 +66,23 @@
     border: 2px solid #fff; image-rendering: pixelated; background: #fff;
   }
 
+  /* ---------- PIXEL FONT ---------- */
+  .brand-title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 1.05em;
+    color: #fff;
+    text-shadow:
+      2px 2px 0 #000,
+      4px 4px 0 #ff8c00;
+    -webkit-font-smoothing: none;
+    font-smooth: never;
+    letter-spacing: 1px;
+  }
+
+  /* ---------- LAYOUT ---------- */
   .container { max-width: 780px; margin: 0 auto; padding: 18px; }
 
+  /* ---------- CARDS ---------- */
   .card {
     background: var(--card);
     border: 4px solid #000;
@@ -73,6 +93,7 @@
   }
   .card h2, .card h3 { margin-bottom: 10px; }
 
+  /* ---------- INPUTS ---------- */
   input, textarea, select {
     width: 100%; padding: 10px 12px; margin-bottom: 10px;
     border: 3px solid #000; border-radius: 8px;
@@ -80,6 +101,7 @@
   }
   label { font-weight: 600; display: block; margin-bottom: 4px; font-size: .9em; }
 
+  /* ---------- BUTTONS ---------- */
   .btn {
     padding: 10px 18px; border: 3px solid #000; border-radius: 8px;
     cursor: pointer; font-weight: 800; font-size: .95em;
@@ -94,6 +116,48 @@
   .btn-secondary { background: #b0bec5; }
   .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
 
+  /* ---------- STATS CARD ---------- */
+  .stats-card {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    background: var(--card);
+    border: 4px solid #000;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 6px 6px 0 rgba(0,0,0,0.35);
+  }
+  .stat-box {
+    text-align: center;
+    padding: 10px 6px;
+    border: 3px solid #000;
+    border-radius: 8px;
+    background: #e0f7fa;
+    box-shadow: 3px 3px 0 #000;
+  }
+  .stat-box.total {
+    background: linear-gradient(135deg, #ffb347, #ff8c00);
+    color: #fff;
+    text-shadow: 1px 1px 0 #000;
+  }
+  .stat-label {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.55em;
+    margin-bottom: 8px;
+    display: block;
+    color: #333;
+  }
+  .stat-box.total .stat-label { color: #fff; }
+  .stat-value {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 1.1em;
+    font-weight: 900;
+    color: #0d2b3e;
+  }
+  .stat-box.total .stat-value { color: #fff; }
+
+  /* ---------- FEED ---------- */
   .post-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
   .post-header img { width: 48px; height: 48px; border-radius: 8px;
                      border: 3px solid #000; image-rendering: pixelated; background: #fff; }
@@ -111,6 +175,7 @@
   .orange-btn.liked { background: #cfd8dc; color: #333; }
   .orange-btn:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 #000; }
 
+  /* ---------- MODALS ---------- */
   .modal-overlay {
     position: fixed; inset: 0; background: rgba(0,0,0,.6);
     display: none; justify-content: center; align-items: center;
@@ -124,6 +189,7 @@
     max-height: 90vh; overflow-y: auto;
   }
 
+  /* ---------- SNAKE OVERLAY ---------- */
   #snakeOverlay {
     position: fixed; inset: 0; background: rgba(0,0,0,.85);
     display: none; flex-direction: column;
@@ -140,6 +206,7 @@
                 font-size: 1.4em; font-weight: 900; margin-bottom: 8px; }
   .game-hint { color: #aaa; font-size: .85em; margin-top: 10px; }
 
+  /* ---------- PROFILE / SUMMARY LISTS ---------- */
   .history-item { border-bottom: 2px dashed #ccc; padding: 8px 0; font-size: .9em; }
   .history-item:last-child { border-bottom: none; }
   .pill { display: inline-block; padding: 2px 8px; border-radius: 12px;
@@ -148,7 +215,7 @@
   .pill.off { background: #ffcdd2; }
   .pill.present { background: #c8e6c9; }
 
-  /* ---------- SKELETON ---------- */
+  /* ---------- SKELETON LOADER ---------- */
   .skeleton { animation: sk-pulse 1.4s ease-in-out infinite; }
   .sk-line { background: #ccc; border-radius: 6px; height: 14px; margin: 8px 0; }
   .sk-line.short { width: 40%; }
@@ -161,12 +228,17 @@
     50% { opacity: .5; }
   }
 
+  /* ---------- RESPONSIVE ---------- */
   @media (max-width: 600px) {
     header { padding: 8px 12px; }
     .logo { height: 38px; }
     .container { padding: 12px; }
     .card { padding: 14px; }
     .btn-row .btn { flex: 1 1 45%; }
+    .brand-title { font-size: 0.85em; text-shadow: 1px 1px 0 #000, 2px 2px 0 #ff8c00; }
+    .stats-card { grid-template-columns: repeat(2, 1fr); padding: 12px; gap: 8px; }
+    .stat-value { font-size: 0.95em; }
+    .stat-label { font-size: 0.5em; }
   }
 </style>
 </head>
@@ -177,8 +249,11 @@
 <div id="ground"></div>
 
 <header>
-  <img src="./LOGO.png" alt="Clan Orange" class="logo"
-       onerror="this.style.display='none'">
+  <div style="display:flex;align-items:center;gap:12px;">
+    <img src="./LOGO.png" alt="Clan Orange" class="logo"
+         onerror="this.style.display='none'">
+    <span class="brand-title">Clan Orange</span>
+  </div>
   <div class="user-info" id="userInfo" style="display:none;">
     <img id="headerPic" src="" alt="">
     <span id="headerName"></span>
@@ -188,6 +263,7 @@
 
 <div class="container">
 
+  <!-- LOGIN -->
   <div id="loginView" class="card" style="max-width:420px;margin:60px auto;">
     <h2>🍊 Clan Orange</h2>
     <p style="margin-bottom:12px;font-size:.9em;color:#555;">
@@ -204,12 +280,36 @@
     <p id="loginError" style="color:#c00;margin-top:10px;font-weight:700;"></p>
   </div>
 
+  <!-- MAIN APP -->
   <div id="mainView" style="display:none;">
+
+    <!-- STATS CARD -->
+    <div class="stats-card" id="statsCard">
+      <div class="stat-box">
+        <span class="stat-label">TODAY</span>
+        <div class="stat-value" id="statDay">—</div>
+      </div>
+      <div class="stat-box">
+        <span class="stat-label">WEEK</span>
+        <div class="stat-value" id="statWeek">—</div>
+      </div>
+      <div class="stat-box">
+        <span class="stat-label">MONTH</span>
+        <div class="stat-value" id="statMonth">—</div>
+      </div>
+      <div class="stat-box total">
+        <span class="stat-label">TOTAL</span>
+        <div class="stat-value" id="statTotal">—</div>
+      </div>
+    </div>
+
+    <!-- ACTIONS -->
     <div class="btn-row">
       <button class="btn btn-primary" onclick="openWorkModal()">+ Submit Work</button>
       <button class="btn btn-secondary" onclick="openOffModal()">🌴 Off Day</button>
       <button class="btn btn-secondary" onclick="openModal('summaryModal')">📊 Summary</button>
     </div>
+
     <h2 style="margin-bottom:12px;color:#fff;text-shadow:2px 2px 0 #000;">📰 Work Feed</h2>
     <div id="feed"></div>
   </div>
@@ -281,6 +381,9 @@
 </div>
 
 <script>
+/* =================================================================
+   CLAN ORANGE — Frontend FINAL
+   ================================================================= */
 const API_URL = 'https://script.google.com/macros/s/AKfycbysr7LGnzaA1iHcm6vzlnPKftbPLnMEp9Qv8RQKWtintNhDWSIvo_9EOMdo6y9y_1Jg9g/exec';
 const FAST_MS = 400;
 
@@ -296,6 +399,12 @@ function todayStr() {
   return y + '-' + m + '-' + day;
 }
 
+function escapeHtml(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/* ---------- API WRAPPER ---------- */
 async function api(action, payload) {
   payload = payload || {};
   const res = await fetch(API_URL, {
@@ -318,9 +427,8 @@ async function withLoader(promiseFactory) {
   }
 }
 
-/* ---------- PRE-WARM: wake Apps Script on page load ---------- */
+/* ---------- PRE-WARM ---------- */
 window.addEventListener('load', function () {
-  // Fire-and-forget ping — no await, no error handling needed
   fetch(API_URL + '?action=ping', { method: 'GET', mode: 'no-cors' }).catch(function () {});
 });
 
@@ -331,6 +439,7 @@ window.addEventListener('scroll', function () {
   document.getElementById('clouds').style.transform = 'translateY(' + (y * 0.6) + 'px)';
 }, { passive: true });
 
+/* ---------- AVATAR FALLBACK ---------- */
 function avatarFallback(code) {
   const initials = String(code).slice(-3);
   const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">' +
@@ -396,7 +505,6 @@ function enterApp() {
   pic.src = './' + currentUser.Code + '.png';
   pic.onerror = function () { this.src = avatarFallback(currentUser.Code); };
 
-  // Show skeleton if we have no cache
   const cached = localStorage.getItem('clanOrangeFeed');
   if (cached) {
     try { feedData = JSON.parse(cached); renderFeed(); } catch (e) { showSkeleton(); }
@@ -404,6 +512,7 @@ function enterApp() {
     showSkeleton();
   }
   loadFeed();
+  loadStats();
 }
 
 function showSkeleton() {
@@ -424,6 +533,18 @@ function showSkeleton() {
     '</div>';
   }
   box.innerHTML = html;
+}
+
+/* ---------- STATS ---------- */
+async function loadStats() {
+  try {
+    const s = await api('getStats', { code: currentUser.Code });
+    if (!s.success) return;
+    document.getElementById('statDay').textContent   = s.day;
+    document.getElementById('statWeek').textContent  = s.week;
+    document.getElementById('statMonth').textContent = s.month;
+    document.getElementById('statTotal').textContent = s.total;
+  } catch (e) { console.error('Stats error', e); }
 }
 
 /* ---------- FEED ---------- */
@@ -471,11 +592,6 @@ function renderFeed() {
   }).join('');
 }
 
-function escapeHtml(s) {
-  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
-                        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
 /* ---------- ORANGE ---------- */
 async function toggleOrange(entryId) {
   const entry = feedData.find(function (e) { return e.entryId === entryId; });
@@ -497,7 +613,7 @@ async function toggleOrange(entryId) {
 /* ---------- WORK MODAL ---------- */
 function openWorkModal() {
   document.getElementById('wDate').value = todayStr();
-  document.getElementById('wDate').max   = todayStr(); // no future dates
+  document.getElementById('wDate').max   = todayStr();
   openModal('workModal');
 }
 
@@ -525,6 +641,7 @@ async function submitWork(btn) {
         document.getElementById(id).value = 0;
       });
       await loadFeed();
+      await loadStats();
     }, 1500);
   } catch (e) {
     setTimeout(function () { hideSnake(); alert('Submit failed. Try again.'); }, 800);
@@ -532,7 +649,7 @@ async function submitWork(btn) {
   }
 }
 
-/* ---------- OFF DAY MODAL ---------- */
+/* ---------- OFF DAY ---------- */
 function openOffModal() {
   document.getElementById('offDate').value = todayStr();
   document.getElementById('offDate').max   = todayStr();
