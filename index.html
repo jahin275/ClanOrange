@@ -148,6 +148,19 @@
   .pill.off { background: #ffcdd2; }
   .pill.present { background: #c8e6c9; }
 
+  /* ---------- SKELETON ---------- */
+  .skeleton { animation: sk-pulse 1.4s ease-in-out infinite; }
+  .sk-line { background: #ccc; border-radius: 6px; height: 14px; margin: 8px 0; }
+  .sk-line.short { width: 40%; }
+  .sk-line.med { width: 70%; }
+  .sk-avatar { width: 48px; height: 48px; background: #ccc; border-radius: 8px; }
+  .sk-tag { display: inline-block; width: 60px; height: 22px; background: #ccc;
+            border-radius: 20px; margin-right: 6px; margin-top: 8px; }
+  @keyframes sk-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .5; }
+  }
+
   @media (max-width: 600px) {
     header { padding: 8px 12px; }
     .logo { height: 38px; }
@@ -193,8 +206,8 @@
 
   <div id="mainView" style="display:none;">
     <div class="btn-row">
-      <button class="btn btn-primary" onclick="openModal('workModal')">+ Submit Work</button>
-      <button class="btn btn-secondary" onclick="markOff()">🌴 Off Day</button>
+      <button class="btn btn-primary" onclick="openWorkModal()">+ Submit Work</button>
+      <button class="btn btn-secondary" onclick="openOffModal()">🌴 Off Day</button>
       <button class="btn btn-secondary" onclick="openModal('summaryModal')">📊 Summary</button>
     </div>
     <h2 style="margin-bottom:12px;color:#fff;text-shadow:2px 2px 0 #000;">📰 Work Feed</h2>
@@ -203,9 +216,12 @@
 
 </div>
 
+<!-- WORK MODAL -->
 <div id="workModal" class="modal-overlay">
   <div class="modal">
     <h3>Submit Work</h3>
+    <label>📅 Date (defaults to today)</label>
+    <input type="date" id="wDate">
     <label>Description (optional)</label>
     <textarea id="wDesc" rows="2" placeholder="What did you do?"></textarea>
     <label>Working Minutes</label>
@@ -222,6 +238,19 @@
   </div>
 </div>
 
+<!-- OFF DAY MODAL -->
+<div id="offModal" class="modal-overlay">
+  <div class="modal">
+    <h3>Mark Off Day</h3>
+    <label>📅 Which day?</label>
+    <input type="date" id="offDate">
+    <button class="btn btn-warn" style="width:100%;" onclick="confirmOff()">🌴 Confirm Off Day</button>
+    <button class="btn btn-secondary" style="width:100%;margin-top:8px;"
+            onclick="closeModal('offModal')">Cancel</button>
+  </div>
+</div>
+
+<!-- SUMMARY MODAL -->
 <div id="summaryModal" class="modal-overlay">
   <div class="modal">
     <h3>Daily Summary</h3>
@@ -234,6 +263,7 @@
   </div>
 </div>
 
+<!-- PROFILE MODAL -->
 <div id="profileModal" class="modal-overlay">
   <div class="modal">
     <div id="profileContent"></div>
@@ -242,6 +272,7 @@
   </div>
 </div>
 
+<!-- SNAKE OVERLAY -->
 <div id="snakeOverlay">
   <div class="game-label">🍊 Loading... Play Snake while we save!</div>
   <div class="game-score">Score: <span id="snakeScore">0</span></div>
@@ -251,10 +282,19 @@
 
 <script>
 const API_URL = 'https://script.google.com/macros/s/AKfycbysr7LGnzaA1iHcm6vzlnPKftbPLnMEp9Qv8RQKWtintNhDWSIvo_9EOMdo6y9y_1Jg9g/exec';
-const FAST_MS = 500;
+const FAST_MS = 400;
 
 let currentUser = null;
 let feedData = [];
+
+/* ---------- HELPERS ---------- */
+function todayStr() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + day;
+}
 
 async function api(action, payload) {
   payload = payload || {};
@@ -271,14 +311,20 @@ async function api(action, payload) {
 async function withLoader(promiseFactory) {
   let shown = false;
   const timer = setTimeout(function () { shown = true; showSnake(); }, FAST_MS);
-  try {
-    return await promiseFactory();
-  } finally {
+  try { return await promiseFactory(); }
+  finally {
     clearTimeout(timer);
     if (shown) hideSnake();
   }
 }
 
+/* ---------- PRE-WARM: wake Apps Script on page load ---------- */
+window.addEventListener('load', function () {
+  // Fire-and-forget ping — no await, no error handling needed
+  fetch(API_URL + '?action=ping', { method: 'GET', mode: 'no-cors' }).catch(function () {});
+});
+
+/* ---------- PARALLAX ---------- */
 window.addEventListener('scroll', function () {
   const y = window.pageYOffset;
   document.getElementById('sky').style.transform    = 'translateY(' + (y * 0.35) + 'px)';
@@ -294,12 +340,12 @@ function avatarFallback(code) {
   return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
 }
 
+/* ---------- LOGIN ---------- */
 async function handleLogin(btn) {
   const code = document.getElementById('loginCode').value.trim();
   const stay = document.getElementById('stayLoggedIn').checked;
   const errEl = document.getElementById('loginError');
   errEl.textContent = '';
-
   if (!code) { errEl.textContent = 'Enter your Code.'; return; }
 
   const orig = btn.textContent;
@@ -350,13 +396,37 @@ function enterApp() {
   pic.src = './' + currentUser.Code + '.png';
   pic.onerror = function () { this.src = avatarFallback(currentUser.Code); };
 
+  // Show skeleton if we have no cache
   const cached = localStorage.getItem('clanOrangeFeed');
   if (cached) {
-    try { feedData = JSON.parse(cached); renderFeed(); } catch (e) {}
+    try { feedData = JSON.parse(cached); renderFeed(); } catch (e) { showSkeleton(); }
+  } else {
+    showSkeleton();
   }
   loadFeed();
 }
 
+function showSkeleton() {
+  const box = document.getElementById('feed');
+  let html = '';
+  for (let i = 0; i < 3; i++) {
+    html += '<div class="card skeleton">' +
+      '<div style="display:flex;gap:12px;align-items:center;">' +
+        '<div class="sk-avatar"></div>' +
+        '<div style="flex:1;">' +
+          '<div class="sk-line med"></div>' +
+          '<div class="sk-line short"></div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="sk-line"></div>' +
+      '<div class="sk-line short"></div>' +
+      '<div><span class="sk-tag"></span><span class="sk-tag"></span><span class="sk-tag"></span></div>' +
+    '</div>';
+  }
+  box.innerHTML = html;
+}
+
+/* ---------- FEED ---------- */
 async function loadFeed() {
   try {
     feedData = await withLoader(function () { return api('getFeed'); });
@@ -406,6 +476,7 @@ function escapeHtml(s) {
                         .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+/* ---------- ORANGE ---------- */
 async function toggleOrange(entryId) {
   const entry = feedData.find(function (e) { return e.entryId === entryId; });
   if (entry) {
@@ -423,7 +494,15 @@ async function toggleOrange(entryId) {
   } catch (e) { console.error(e); loadFeed(); }
 }
 
+/* ---------- WORK MODAL ---------- */
+function openWorkModal() {
+  document.getElementById('wDate').value = todayStr();
+  document.getElementById('wDate').max   = todayStr(); // no future dates
+  openModal('workModal');
+}
+
 async function submitWork(btn) {
+  const date  = document.getElementById('wDate').value || todayStr();
   const desc  = document.getElementById('wDesc').value;
   const mins  = document.getElementById('wMin').value;
   const promo = document.getElementById('wPromo').value;
@@ -436,7 +515,8 @@ async function submitWork(btn) {
   try {
     await api('submitWork', {
       code: currentUser.Code, description: desc,
-      minutes: mins, promos: promo, apps: app, regs: reg
+      minutes: mins, promos: promo, apps: app, regs: reg,
+      date: date
     });
     setTimeout(async function () {
       hideSnake();
@@ -452,14 +532,25 @@ async function submitWork(btn) {
   }
 }
 
-async function markOff() {
-  if (!confirm('Mark today as an Off Day?')) return;
+/* ---------- OFF DAY MODAL ---------- */
+function openOffModal() {
+  document.getElementById('offDate').value = todayStr();
+  document.getElementById('offDate').max   = todayStr();
+  openModal('offModal');
+}
+
+async function confirmOff() {
+  const date = document.getElementById('offDate').value || todayStr();
+  closeModal('offModal');
   try {
-    await withLoader(function () { return api('markOffDay', { code: currentUser.Code }); });
-    alert('Off Day recorded. 🌴');
+    await withLoader(function () {
+      return api('markOffDay', { code: currentUser.Code, date: date });
+    });
+    alert('Off Day recorded for ' + date + ' 🌴');
   } catch (e) { alert('Failed.'); }
 }
 
+/* ---------- SUMMARY ---------- */
 async function loadSummary() {
   const d = document.getElementById('sumDate').value;
   if (!d) return;
@@ -485,6 +576,7 @@ async function loadSummary() {
   } catch (e) { box.innerHTML = 'Error loading summary.'; }
 }
 
+/* ---------- PROFILE ---------- */
 async function viewProfile(code) {
   openModal('profileModal');
   const box = document.getElementById('profileContent');
@@ -537,9 +629,11 @@ async function viewProfile(code) {
   } catch (e) { box.innerHTML = '<p>Error loading profile.</p>'; }
 }
 
+/* ---------- MODALS ---------- */
 function openModal(id) { document.getElementById(id).classList.add('show'); }
 function closeModal(id) { document.getElementById(id).classList.remove('show'); }
 
+/* ---------- SNAKE GAME ---------- */
 let snakeTick = null;
 let snakeKeyHandler = null;
 
